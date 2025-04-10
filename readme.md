@@ -7,6 +7,19 @@ This setup consists of the following piece:
  - A notifier attached to a job template to notify EDA of a job failure
  - Rulebook to parse the job failure output
  - A playbook to parse the failures, send it to OpenAI, and then create a ServiceNow ticket with the failure info.
+
+ Feel free to modify the prompt and tune it to your desired output.
+<br>
+<br>
+
+# How it Works
+When a job in AAP fails, and the notifier is attached, it will send a webhook to the EDA Event Stream. 
+
+The rulebook has a simple conditional check to see if the status of the job was failed and to launch the specific Job Template (**modify this**) to parse data.
+
+The job template uses the get_failed_jobs.yml playbook looks up the failed job data, parses it, sends it to OpenAI to summarize it and then finally creates a ServiceNow ticket with the summary.
+
+<br>
 <br>
 
 # Steps to set up
@@ -29,6 +42,7 @@ To set up this integration, I chose to use a Basic Authentication Event Stream t
 ![AAP Notifier](/images/jobtemplate.png)
 
 <br>
+<br>
 
 # Playbook Requirements
 
@@ -46,6 +60,13 @@ You will need the following variables to run this playbook, modify as needed:
 
 >If you are not already doing so, I strongly recommend creating [Custom Credential Types](https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.5/html/using_automation_execution/assembly-controller-custom-credentials) to encrypt these variables.
 
+<br>
+<br>
+
+# Rulebook Requirements
+
+You will need to modify the job template name and organization name in the rulebook found in rulebooks/rulebooks.yml. You may also need to modify the webhook port.
+<br>
 <br>
 
 # Example Output to ServiceNow
