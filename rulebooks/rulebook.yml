@@ -1,0 +1,19 @@
+- name: Parse failed Ansible jobs with LLM
+  hosts: all
+  sources:
+    - ansible.eda.webhook:
+        host: 0.0.0.0
+        port: 5010
+
+  rules:
+    - name: Get Payload Info
+      condition:
+        all:
+          - event.payload.status == "failed"
+      actions:
+        - debug:
+           msg: "{{ event.payload }}"
+
+        - run_job_template:
+            name: LLM - Failed Job Data
+            organization: MackNet

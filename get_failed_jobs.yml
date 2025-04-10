@@ -1,0 +1,69 @@
+- hosts: localhost
+  gather_facts: false 
+  vars:
+    jqueryinfo: "[? failed==`true`].{Host: host_name, Message: stdout}"
+    base_url: "https://myaapurl.mycompany.com/api/controller/v2/jobs/"
+    snow_host: "https://myinstance.service-now.com"
+    snow_user: "admin"
+    snow_password: "password" #Please use vault or an Automation Controller credential
+    snow_caller: "my_username"
+    openai_token: "{{ lookup('env','OPENAI_API_KEY') }}"
+  tasks:  
+    - name: Set Job ID Fact
+      set_fact:
+        job_id: "{{ ansible_eda.event.payload.id }}" #Parsed from EDA job payload
+      when: ansible_eda.event.payload is defined
+    
+    - name: Get Job Data
+      when: job_id is defined
+      block:
+        - name: Set Job URL Fact
+          set_fact:
+            job_url: "{{ base_url }}{{ job_id }}/job_events?page_size=300" #Tries to account for large output jobs that span multiple pages
+
+        #Retrieve the job_event payload from the failed job
+        - name: Get Failed Job Payload
+          uri:
+            url: "{{ job_url }}"
+            user: "{{ lookup('env','ANSIBLE_NET_USERNAME') }}"
+            password: "{{ lookup('env','ANSIBLE_NET_PASSWORD') }}"
+            force_basic_auth: true
+            validate_certs: false
+          register: failed_data
+
+        #Uses jquery to find all tasks that failed in the playbook as well as the hostname
+        - name: Get Failed Host Data
+          set_fact:
+            failed_host_data: "{{ failed_data.json.results | json_query(jqueryinfo) }}"
+
+
+    - name: Get GPT Summaries
+      uri:
+        url: https://api.openai.com/v1/chat/completions
+        body_format: json
+        method: POST
+        headers:
+          Authorization: "Bearer {{ openai_token }}"
+        body:
+          model: gpt-4o
+          messages:
+            - role: user
+              content: "Summarize the errors in the following Ansible output by displaying only the hostname and the respective error for that host and a possible recommendation to resolve it  {{ failed_host_data }}"
+      when: failed_host_data is iterable
+      register: gpt_summaries
+
+
+    - name: Get Failed Host Data
+      set_fact:
+        gpt_summaries: "{{ gpt_summaries.json.choices.0.message.content }}"
+
+    - name: Create incident
+      servicenow.itsm.incident:
+        instance:
+          host: "{{ snow_host }}"
+          username: "{{ snow_user }}"
+          password: "{{ snow_password }}"
+        state: new
+        caller: "{{ snow_caller }}"
+        short_description: "Ansible job failure for job ID {{ job_id }}"
+        description: "{{ lookup('template','gpt_summary.j2') }}"
