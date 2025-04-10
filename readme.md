@@ -8,7 +8,7 @@ This setup consists of the following piece:
  - Rulebook to parse the job failure output
  - A playbook to parse the failures, send it to OpenAI, and then create a ServiceNow ticket with the failure info.
 <br>
-<br>
+
 # Steps to set up
 This assumes you are using AAP 2.5 or at least the EDA 2.5 controller. 
 
@@ -29,7 +29,6 @@ To set up this integration, I chose to use a Basic Authentication Event Stream t
 ![AAP Notifier](/images/jobtemplate.png)
 
 <br>
-<br>
 
 # Playbook Requirements
 
@@ -47,7 +46,6 @@ You will need the following variables to run this playbook, modify as needed:
 
 >If you are not already doing so, I strongly recommend creating [Custom Credential Types](https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.5/html/using_automation_execution/assembly-controller-custom-credentials) to encrypt these variables.
 
-<br>
 <br>
 
 # Example Output to ServiceNow
