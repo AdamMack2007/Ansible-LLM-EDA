@@ -48,7 +48,7 @@
           model: gpt-4o
           messages:
             - role: user
-              content: "Summarize the errors in the following Ansible output by displaying only the hostname and the respective error for that host and a possible recommendation to resolve it  {{ failed_host_data }}"
+              content: "Summarize the errors in the following Ansible output by displaying only the hostname and the respective error for that host as well as why this error might have occurred and a possible recommendation to resolve it  {{ failed_host_data }}"
       when: failed_host_data is iterable
       register: gpt_summaries
 
